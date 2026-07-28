@@ -1,0 +1,12 @@
+# 전투 기획서 kind
+
+전투 kind는 플레이어가 경험하는 전투 규칙·행동·튜닝을 분리한다. 전역 규칙은 `combat-system`, 개별 행동은 하위 kind, 목표 수치는 `combat-balance`가 소유한다. 프레임·틱, 클라이언트·서버 판정 위치와 내부 처리 순서는 관찰 결과를 만족하기 위한 `개발 협의 조건`이다.
+
+| 기획서 / kind ID / profile | 목적·주 독자 | 반드시 답할 결정 | 필수 산출물 | 기본 제외 | 인접 문서 핸드오프 | 완료 조건 |
+|---|---|---|---|---|---|---|
+| 전투 시스템 기획서<br>`combat-system`<span id="combat-system"></span><br>`system` | 전투의 공통 상태·판정 규칙 정의<br>전투·시스템·데이터·QA 기획 및 개발 협업 담당 | 공격·피격·방어·회피·사망·승패는 어떤 조건과 우선순위로 어떤 관찰 결과를 만드는가? | 전투 상태도, 액션 우선순위, 타깃·명중·피해 계산 규칙, 상태효과 규약, 종료 조건 | 개별 스킬 목록, 캐릭터별 조작, 적 패턴, 최종 계수 | 입력: `character-system`<br>출력: `skill-design`, `character-combat`, `monster-boss`, `combat-balance`, `logging-spec` | 동시 입력 조합을 포함한 조건별 판정 결과와 모든 전투 종료 경로를 재현할 수 있으며 실행 순서는 개발 협의 조건으로 분리된다 |
+| 스킬 기획서<br>`skill-design`<span id="skill-design"></span><br>`system` | 스킬 단위 행동과 연출 계약 정의<br>전투·연출·애니메이션·UI·QA 기획 및 개발 협업 담당 | 시전·타깃·범위·자원·쿨타임·취소·피격은 어떤 행동 구간과 조건에서 성립하는가? | 스킬 명세, 행동 구간표, 범위·명중 규칙, 자원·쿨타임 상태, 상태효과·연출 단서, 취소·실패 규칙 | 캐릭터 역할 조합, 최종 위력 수치, 전역 피해 규칙 | 입력: `combat-system`<br>출력: `character-combat`, `combat-balance`, `data-table-spec`, `control-scheme` | 입력부터 결과·연출 종료까지의 상대 구간과 실패 사유가 명확하고 프레임 환산은 개발 협의 조건으로 남는다 |
+| 캐릭터 전투 기획서<br>`character-combat`<span id="character-combat"></span><br>`system` | 캐릭터별 역할·플레이스타일·조작 정의<br>전투·캐릭터·애니메이션·UI 기획자 | 이 캐릭터의 역할, 기본 행동, 콤보, 자원 순환, 장단점과 숙련 포인트는 무엇인가? | 전투 역할 카드, 액션·콤보 맵, 스킬 키트 시너지, 자원 루프, 강·약점과 대응법 | 공통 전투 판정, 최종 계수, 서사 설정·성장 상태 | 입력: `character-system`, `skill-design`<br>출력: `control-scheme`, `combat-balance`, `tutorial-design` | 목표 역할이 각 행동으로 추적되고 금지 조합·입력 충돌이 없다 |
+| 몬스터·보스 기획서<br>`monster-boss`<span id="monster-boss"></span><br>`system` | 적 행동·패턴·페이즈와 대응 단서 정의<br>전투·레벨·연출·애니메이션·QA 기획 및 개발 협업 담당 | 감지·이동·공격·후퇴·페이즈 전환은 무엇으로 촉발되며 플레이어는 어떻게 읽고 대응하는가? | 행동 상태 맵과 선택 조건, 패턴 타임라인, 텔레그래프 표, 페이즈·분노·리셋 규칙, 등장·이탈 조건 | 보상량, 레벨 내 최종 배치, 수치 튜닝 | 입력: `combat-system`<br>출력: `dungeon-design`, `stage-design`, `combat-balance`, `reward-design` | 모든 패턴에 진입 조건·예고·판정·회복·중단 규칙이 있고 무한 교착이 없으며 행동 구현 구조는 개발 협의 조건으로 남는다 |
+| 전투 밸런스 기획서<br>`combat-balance`<span id="combat-balance"></span><br>`balance` | 전투 수치 목표와 조정 기준 정의<br>밸런스·전투·데이터·QA 기획자 | 목표 TTK·DPS·EHP·승률은 무엇이며 역할·무기·스킬·적 간 허용 편차는 얼마인가? | 핵심 지표, 계산식·곡선, 매치업 매트릭스, 기준 빌드·적, 시뮬레이션 시나리오, 튜닝 허용 범위 | 전투 의미 규칙, 스킬 동작 정의, UI 표현 | 입력: `combat-system`, `skill-design`, `character-combat`, `monster-boss`<br>출력: `data-table-spec`, `logging-spec`, `stage-design` | 기준 시나리오가 목표 구간을 통과하고 변경 영향·회귀 기준을 수치로 판정할 수 있다 |
+
