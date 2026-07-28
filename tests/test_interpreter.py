@@ -9,7 +9,10 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+TEST_DIR = Path(__file__).resolve().parent
+REPO_ROOT = TEST_DIR.parent
+SKILL_DIR = REPO_ROOT / "skill" / "game-gdd-html"
+SCRIPT_DIR = SKILL_DIR / "scripts"
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 

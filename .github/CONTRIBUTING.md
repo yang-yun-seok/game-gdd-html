@@ -66,10 +66,10 @@ git switch -c feat/short-description
 
 관련 문서:
 
-- [`references/document-architecture.md`](references/document-architecture.md)
-- [`references/planning-authority-boundary.md`](references/planning-authority-boundary.md)
-- [`references/practical-writing-style.md`](references/practical-writing-style.md)
-- [`references/input-schema.md`](references/input-schema.md)
+- [`document-architecture.md`](../skill/game-gdd-html/references/document-architecture.md)
+- [`planning-authority-boundary.md`](../skill/game-gdd-html/references/planning-authority-boundary.md)
+- [`practical-writing-style.md`](../skill/game-gdd-html/references/practical-writing-style.md)
+- [`input-schema.md`](../skill/game-gdd-html/references/input-schema.md)
 
 ## 변경 원칙
 
@@ -77,9 +77,9 @@ git switch -c feat/short-description
 
 문서 종류와 범위의 단일 진실 공급원은 Python 계약 파일입니다.
 
-- kind 계약: `scripts/kind_contracts.py`
-- profile 계약: `scripts/profile_contracts.py`
-- 한국어 라우팅: `scripts/request_rules.py`
+- kind 계약: `skill/game-gdd-html/scripts/kind_contracts.py`
+- profile 계약: `skill/game-gdd-html/scripts/profile_contracts.py`
+- 한국어 라우팅: `skill/game-gdd-html/scripts/request_rules.py`
 
 참고 문서만 변경해 런타임 계약과 어긋나게 만들지 않습니다. 계약, 참고 문서와 테스트를 같은 PR에서 함께 갱신합니다.
 
@@ -113,7 +113,7 @@ profile, kind ID, facet, GDDQL과 선택된 section 목록은 생성·검증을 
 
 새로운 세부 문서 종류를 추가할 때는 다음을 모두 반영합니다.
 
-1. `scripts/kind_contracts.py`
+1. `skill/game-gdd-html/scripts/kind_contracts.py`
    - canonical kind ID
    - 한국어 label과 aliases
    - category와 profile
@@ -121,16 +121,16 @@ profile, kind ID, facet, GDDQL과 선택된 section 목록은 생성·검증을 
    - required outputs
    - default excludes
    - downstream handoffs
-2. 해당 `references/kinds/<category>.md`
+2. 해당 `skill/game-gdd-html/references/kinds/<category>.md`
    - 소유 범위
    - 필수 산출물
    - 명시적 제외
    - 대표 시나리오
    - 인접 문서 연결
-3. 필요한 경우 `scripts/request_rules.py`
+3. 필요한 경우 `skill/game-gdd-html/scripts/request_rules.py`
    - 한국어 자연어 키워드
    - 중첩 표현의 우선순위
-4. `scripts/test_kinds.py`
+4. `tests/test_kinds.py`
    - 한국어 label 라우팅
    - alias 라우팅
    - profile 매핑
@@ -146,10 +146,10 @@ kind는 기존 문서와 제목만 달라서는 안 됩니다. 고유한 결정 
 
 profile을 추가하거나 변경할 때는 다음을 확인합니다.
 
-1. `scripts/profile_contracts.py`의 label, core, allowed sections, facets와 dependencies
-2. `references/profiles/<profile>.md`의 작성 계약
+1. `skill/game-gdd-html/scripts/profile_contracts.py`의 label, core, allowed sections, facets와 dependencies
+2. `skill/game-gdd-html/references/profiles/<profile>.md`의 작성 계약
 3. 관련 kind의 profile 매핑
-4. `scripts/test_profiles.py`의 대표 렌더·검증
+4. `tests/test_profiles.py`의 대표 렌더·검증
 5. 다른 profile의 section이 혼입되지 않는지 검증
 
 `full`은 전체·통합·마스터 GDD 요청에만 사용한다는 원칙을 유지합니다.
@@ -159,27 +159,27 @@ profile을 추가하거나 변경할 때는 다음을 확인합니다.
 PR 전 다음 명령을 모두 실행합니다.
 
 ```bash
-python scripts/validate_skill.py .
-python scripts/test_interpreter.py
-python scripts/test_kinds.py
-python scripts/test_profiles.py
+python tools/validate_skill.py skill/game-gdd-html
+python tests/test_interpreter.py
+python tests/test_kinds.py
+python tests/test_profiles.py
 ```
 
 대표 요청의 해석 결과도 확인하는 것을 권장합니다.
 
 ```bash
-python scripts/interpret_request.py \
+python skill/game-gdd-html/scripts/interpret_request.py \
   --text "장비 강화 UI 기획서를 작성해줘. 재화 부족과 결과 피드백을 포함해줘."
 ```
 
 렌더러를 수정한 경우 대표 JSON을 HTML로 렌더하고 검증합니다.
 
 ```bash
-python scripts/render_gdd.py \
+python skill/game-gdd-html/scripts/render_gdd.py \
   working/project-ui-spec.json \
   -o output/Project_ui-spec_GDD_YYYYMMDD.html
 
-python scripts/validate_gdd.py \
+python skill/game-gdd-html/scripts/validate_gdd.py \
   output/Project_ui-spec_GDD_YYYYMMDD.html \
   --profile ui-ux \
   --kind ui-spec \
@@ -250,18 +250,18 @@ PR 템플릿의 체크리스트를 작성해 주세요. CI가 실패하는 PR은
 - `MINOR`: 호환되는 신규 kind, profile 또는 기능
 - `PATCH`: 호환되는 버그 수정과 문서 개선
 
-`0.x` 기간에는 계약이 빠르게 변할 수 있습니다. 호환성에 영향을 주는 변경은 PR과 `CHANGELOG.md`에 명시합니다.
+`0.x` 기간에는 계약이 빠르게 변할 수 있습니다. 호환성에 영향을 주는 변경은 PR과 `docs/CHANGELOG.md`에 명시합니다.
 
 릴리스 조건:
 
 1. `main`의 CI 통과
-2. `CHANGELOG.md` 갱신
+2. `docs/CHANGELOG.md` 갱신
 3. 버전 태그 생성
 4. GitHub Release에 주요 변경과 마이그레이션 필요 여부 기록
 
 ## 도움이 필요한 경우
 
-- 사용법: README와 기존 이슈를 먼저 확인합니다.
+- 사용법: [`README.md`](../README.md)와 기존 이슈를 먼저 확인합니다.
 - 재현 가능한 오류: Bug Report 이슈를 작성합니다.
 - 기능·문서 종류 제안: 해당 제안 양식을 사용합니다.
 - 보안 문제: `SECURITY.md`의 비공개 절차를 사용합니다.

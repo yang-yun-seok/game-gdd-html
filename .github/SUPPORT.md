@@ -4,9 +4,9 @@
 
 먼저 다음 문서를 확인해 주세요.
 
-- [`README.md`](README.md)
-- [`references/gddql.md`](references/gddql.md)
-- [`references/input-schema.md`](references/input-schema.md)
+- [`README.md`](../README.md)
+- [`gddql.md`](../skill/game-gdd-html/references/gddql.md)
+- [`input-schema.md`](../skill/game-gdd-html/references/input-schema.md)
 
 설치·실행 오류는 환경 정보와 재현 단계를 포함해 Bug Report를 작성해 주세요.
 
