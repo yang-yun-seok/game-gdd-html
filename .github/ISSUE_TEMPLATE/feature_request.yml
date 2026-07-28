@@ -1,0 +1,78 @@
+name: Feature Request
+description: 기존 기능, 워크플로와 출력 품질의 개선을 제안합니다.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: 사전 확인
+      options:
+        - label: 기존 Issue와 Pull Request에 같은 제안이 없는지 확인했습니다.
+          required: true
+        - label: 새로운 세부 기획서 종류 제안이라면 Document Kind Request 양식을 사용했습니다.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 해결하려는 문제
+      description: 현재 어떤 작업이 어렵거나 불가능한지 설명해 주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 제안하는 결과
+      description: 구현 방법보다 사용자에게 필요한 동작과 결과를 설명해 주세요.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 영향 영역
+      multiple: true
+      options:
+        - 자연어 요청 해석
+        - GDDQL
+        - document kind
+        - profile
+        - 범위 필터
+        - HTML 렌더러
+        - HTML 검증
+        - 문서·기여 경험
+        - 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: 대표 입력과 기대 출력
+      description: 가능하면 최소 예시를 작성해 주세요.
+      placeholder: |
+        입력:
+        기대 결과:
+    validations:
+      required: true
+
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: 호환성 영향
+      description: 기존 GDDQL, JSON, HTML 또는 문서 종류에 영향을 주는 부분을 적어 주세요.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 검토한 대안
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: 기여 의사
+      options:
+        - label: 설계 논의 후 Pull Request를 작성할 수 있습니다.
