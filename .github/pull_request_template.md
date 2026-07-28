@@ -21,10 +21,10 @@
 실행한 명령과 결과를 작성해 주세요.
 
 ```text
-python scripts/validate_skill.py .
-python scripts/test_interpreter.py
-python scripts/test_kinds.py
-python scripts/test_profiles.py
+python tools/validate_skill.py skill/game-gdd-html
+python tests/test_interpreter.py
+python tests/test_kinds.py
+python tests/test_profiles.py
 ```
 
 ## 렌더 결과

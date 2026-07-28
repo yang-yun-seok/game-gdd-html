@@ -14,9 +14,6 @@ MAX_DESCRIPTION_LENGTH = 1024
 ALLOWED_PROPERTIES = {
     "name",
     "description",
-    "license",
-    "allowed-tools",
-    "metadata",
 }
 
 
@@ -106,10 +103,6 @@ def validate_skill(skill_path: Path) -> list[str]:
                 f"{MAX_DESCRIPTION_LENGTH} characters"
             )
 
-    license_name = frontmatter.get("license", "").strip()
-    if license_name and license_name != "MIT":
-        errors.append("frontmatter 'license' must match the repository MIT license")
-
     return errors
 
 
@@ -120,9 +113,12 @@ def main() -> int:
     parser.add_argument(
         "path",
         nargs="?",
-        default=".",
+        default="skill/game-gdd-html",
         type=Path,
-        help="Skill directory or SKILL.md path (default: current directory)",
+        help=(
+            "Skill directory or SKILL.md path "
+            "(default: skill/game-gdd-html)"
+        ),
     )
     args = parser.parse_args()
 

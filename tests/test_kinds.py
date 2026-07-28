@@ -4,18 +4,26 @@
 from __future__ import annotations
 
 import re
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from interpret_request import InterpretError, interpret, parse_gddql
+TEST_DIR = Path(__file__).resolve().parent
+REPO_ROOT = TEST_DIR.parent
+SKILL_DIR = REPO_ROOT / "skill" / "game-gdd-html"
+SCRIPT_DIR = SKILL_DIR / "scripts"
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from interpret_request import InterpretError, interpret, parse_gddql  # noqa: E402
 from kind_contracts import (
     CATEGORY_REFERENCE_FILES,
     KIND_CONTRACTS,
     KIND_NAMES,
     assert_kind_contracts_valid,
 )
-from profile_contracts import PROFILE_RULES
+from profile_contracts import PROFILE_RULES  # noqa: E402
 from render_gdd import (
     KIND_LABELS_EN,
     PROFILE_LABELS_KO,
@@ -23,8 +31,8 @@ from render_gdd import (
     default_output_path,
     render_document,
 )
-from test_profiles import TEMPLATE_PATH, make_filtered_data
-from validate_gdd import validate
+from test_profiles import TEMPLATE_PATH, make_filtered_data  # noqa: E402
+from validate_gdd import validate  # noqa: E402
 
 AUTHORITY_BOUNDARY_KO = (
     "게임 규칙과 사용자 결과를 정의한다. 구현 방식은 개발 협의에서 확정한다."

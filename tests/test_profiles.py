@@ -5,8 +5,16 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import tempfile
 from pathlib import Path
+
+TEST_DIR = Path(__file__).resolve().parent
+REPO_ROOT = TEST_DIR.parent
+SKILL_DIR = REPO_ROOT / "skill" / "game-gdd-html"
+SCRIPT_DIR = SKILL_DIR / "scripts"
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 from profile_contracts import (
     PROFILE_NAMES,
@@ -22,8 +30,7 @@ from render_gdd import (
 from validate_gdd import validate
 
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-TEMPLATE_PATH = SCRIPT_DIR.parent / "assets" / "gdd-template.html"
+TEMPLATE_PATH = SKILL_DIR / "assets" / "gdd-template.html"
 
 
 def visual_blocks(profile: str) -> list[dict[str, object]]:

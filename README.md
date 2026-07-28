@@ -14,6 +14,9 @@
 
 사용자가 요청한 **기획서 종류**를 먼저 판별하고, 해당 문서가 책임져야 할 내용만 선택해 독립된 HTML 문서로 작성한다. 자연어를 기본 입력으로 사용하며, 더 정밀한 제어가 필요할 때는 SQL과 비슷한 선택형 문법인 **GDDQL**을 사용할 수 있다.
 
+> **스킬만 설치하려면 [`skill/game-gdd-html/`](skill/game-gdd-html/) 폴더 하나만 복사하면 된다.**
+> `.github/`, `docs/`, `tests/`, `tools/`는 저장소 운영과 개발에만 사용하며 설치 대상이 아니다.
+
 ---
 
 ## 이 스킬이 해결하는 문제
@@ -263,40 +266,58 @@ flowchart LR
 
 - Codex Desktop 또는 Codex CLI
 - Python 3.10 이상
-- Git
+- Git(저장소 clone·업데이트 시)
 - HTML을 확인할 최신 브라우저
 
 Python 스크립트는 표준 라이브러리만 사용하므로 별도의 `pip install`이 필요하지 않다.
 
-### Codex 스킬로 설치
+### 스킬만 설치
+
+설치 대상은 [`skill/game-gdd-html/`](skill/game-gdd-html/) 하나다. 저장소 루트 전체를 Codex 스킬 폴더에 넣지 않는다.
+
+GitHub 화면에서 설치하려면 `Code` → `Download ZIP`으로 받은 뒤, 압축 안의 `skill/game-gdd-html` 폴더만 `~/.codex/skills/game-gdd-html`로 복사한다.
 
 Windows PowerShell:
 
 ```powershell
-git clone https://github.com/yang-yun-seok/game-gdd-html.git `
+git clone --depth 1 https://github.com/yang-yun-seok/game-gdd-html.git
+Copy-Item -Recurse `
+  ".\game-gdd-html\skill\game-gdd-html" `
   "$env:USERPROFILE\.codex\skills\game-gdd-html"
 ```
 
 macOS 또는 Linux:
 
 ```bash
-git clone https://github.com/yang-yun-seok/game-gdd-html.git \
+git clone --depth 1 https://github.com/yang-yun-seok/game-gdd-html.git
+cp -R ./game-gdd-html/skill/game-gdd-html \
   "$HOME/.codex/skills/game-gdd-html"
 ```
 
-이미 같은 경로에 폴더가 있다면 먼저 내용을 확인하고 백업하거나 기존 Git 저장소에서 `git pull`을 사용한다. 설치 후 새 Codex 작업을 시작하면 `game-gdd-html` 스킬이 검색된다.
+이미 같은 설치 경로가 있다면 덮어쓰기 전에 기존 폴더를 백업한다. 설치 후 새 Codex 작업을 시작하면 `game-gdd-html` 스킬이 검색된다.
 
-### 업데이트
+### 저장소 개발과 자동 업데이트
 
-```bash
-git -C ~/.codex/skills/game-gdd-html pull --ff-only
-```
+수정하거나 최신 변경을 계속 받으려면 저장소를 별도 위치에 clone하고 설치 경로를 스킬 폴더에 연결한다.
 
 Windows PowerShell:
 
 ```powershell
-git -C "$env:USERPROFILE\.codex\skills\game-gdd-html" pull --ff-only
+git clone https://github.com/yang-yun-seok/game-gdd-html.git
+New-Item -ItemType Junction `
+  -Path "$env:USERPROFILE\.codex\skills\game-gdd-html" `
+  -Target (Resolve-Path ".\game-gdd-html\skill\game-gdd-html")
 ```
+
+macOS 또는 Linux:
+
+```bash
+git clone https://github.com/yang-yun-seok/game-gdd-html.git
+ln -s "$(pwd)/game-gdd-html/skill/game-gdd-html" \
+  "$HOME/.codex/skills/game-gdd-html"
+```
+
+이 방식의 업데이트는 저장소 루트에서 `git pull --ff-only`를 실행하면 된다.
 
 ---
 
@@ -390,7 +411,7 @@ OUTPUT HTML SPLIT;
 
 직접 작성한 GDDQL에 구문 오류가 있으면 자연어로 임의 재해석하지 않고 수정 가능한 오류를 반환한다.
 
-자세한 계약은 [`references/gddql.md`](references/gddql.md)를 참고한다.
+자세한 계약은 [`skill/game-gdd-html/references/gddql.md`](skill/game-gdd-html/references/gddql.md)를 참고한다.
 
 ---
 
@@ -399,7 +420,7 @@ OUTPUT HTML SPLIT;
 ### 1. 자연어 또는 GDDQL 해석
 
 ```bash
-python scripts/interpret_request.py \
+python skill/game-gdd-html/scripts/interpret_request.py \
   --text "장비 강화 UI 기획서를 작성해줘. 재화 부족과 결과 피드백을 포함해줘." \
   > request-plan.json
 ```
@@ -417,7 +438,7 @@ python scripts/interpret_request.py \
 정규화된 GDDQL만 확인하려면:
 
 ```bash
-python scripts/interpret_request.py \
+python skill/game-gdd-html/scripts/interpret_request.py \
   --text "퀘스트 시스템 기획서를 작성해줘" \
   --format gddql
 ```
@@ -425,17 +446,17 @@ python scripts/interpret_request.py \
 ### 2. 구조화 JSON을 HTML로 렌더
 
 ```bash
-python scripts/render_gdd.py \
+python skill/game-gdd-html/scripts/render_gdd.py \
   working/project-ui-spec.json \
   -o output/Project_ui-spec_GDD_YYYYMMDD.html
 ```
 
-입력 JSON 계약은 [`references/input-schema.md`](references/input-schema.md)를 따른다.
+입력 JSON 계약은 [`skill/game-gdd-html/references/input-schema.md`](skill/game-gdd-html/references/input-schema.md)를 따른다.
 
 ### 3. HTML 검증
 
 ```bash
-python scripts/validate_gdd.py \
+python skill/game-gdd-html/scripts/validate_gdd.py \
   output/Project_ui-spec_GDD_YYYYMMDD.html \
   --profile ui-ux \
   --kind ui-spec \
@@ -459,10 +480,10 @@ JSON 형식의 검증 결과가 필요하면 `--json`을 추가한다.
 ## 테스트
 
 ```bash
-python scripts/validate_skill.py .
-python scripts/test_interpreter.py
-python scripts/test_kinds.py
-python scripts/test_profiles.py
+python tools/validate_skill.py skill/game-gdd-html
+python tests/test_interpreter.py
+python tests/test_kinds.py
+python tests/test_profiles.py
 ```
 
 검증 범위:
@@ -484,55 +505,39 @@ python scripts/test_profiles.py
 ```text
 game-gdd-html/
 ├─ .github/
-│  ├─ ISSUE_TEMPLATE/        # 버그·기능·문서 종류 제안 양식
-│  ├─ workflows/ci.yml       # Python 자동 검증
+│  ├─ ISSUE_TEMPLATE/             # 버그·기능·문서 종류 제안 양식
+│  ├─ workflows/ci.yml            # Python 자동 검증
+│  ├─ CONTRIBUTING.md
+│  ├─ CODE_OF_CONDUCT.md
+│  ├─ SECURITY.md
+│  ├─ SUPPORT.md
 │  └─ pull_request_template.md
-├─ SKILL.md
 ├─ LICENSE
-├─ CONTRIBUTING.md
-├─ CODE_OF_CONDUCT.md
-├─ SECURITY.md
-├─ SUPPORT.md
-├─ CHANGELOG.md
-├─ agents/
-│  └─ openai.yaml
-├─ assets/
-│  └─ gdd-template.html
-├─ references/
-│  ├─ kinds/                 # 9개 문서 카테고리 계약
-│  ├─ profiles/              # 12개 영역별 섹션 계약
-│  ├─ prompt-01-interpret.md
-│  ├─ prompt-02-route.md
-│  ├─ prompt-03-scope.md
-│  ├─ prompt-04-question.md
-│  ├─ prompt-05-author.md
-│  ├─ prompt-06-review.md
-│  ├─ gddql.md
-│  ├─ input-schema.md
-│  ├─ planning-authority-boundary.md
-│  ├─ practical-writing-style.md
-│  └─ quality-checklist.md
-└─ scripts/
-   ├─ interpret_request.py
-   ├─ request_rules.py
-   ├─ kind_contracts.py
-   ├─ profile_contracts.py
-   ├─ render_gdd.py
-   ├─ validate_gdd.py
-   ├─ validate_skill.py
-   ├─ test_interpreter.py
-   ├─ test_kinds.py
-   └─ test_profiles.py
+├─ README.md
+├─ skill/
+│  └─ game-gdd-html/              # 사용자가 설치할 유일한 폴더
+│     ├─ SKILL.md
+│     ├─ LICENSE
+│     ├─ agents/
+│     ├─ assets/
+│     ├─ references/
+│     │  ├─ kinds/                # 9개 문서 카테고리 계약
+│     │  └─ profiles/             # 12개 영역별 섹션 계약
+│     └─ scripts/                 # 스킬 실행에 필요한 런타임
+├─ tests/                          # 저장소 회귀 테스트
+├─ tools/                          # 저장소 유지보수 도구
+└─ docs/
+   └─ CHANGELOG.md
 ```
 
 ### 설계상 단일 진실 공급원
 
-- kind 이름, profile 매핑, 기본 facet, 산출물과 핸드오프: `scripts/kind_contracts.py`
-- profile별 core, facet, dependency와 허용 section: `scripts/profile_contracts.py`
-- 한국어 요청 라우팅 키워드: `scripts/request_rules.py`
-- HTML 입력 계약: `references/input-schema.md`
-- 기획과 구현의 경계: `references/planning-authority-boundary.md`
-- 실무 문체와 비노출 규칙: `references/practical-writing-style.md`
+- kind 이름, profile 매핑, 기본 facet, 산출물과 핸드오프: `skill/game-gdd-html/scripts/kind_contracts.py`
+- profile별 core, facet, dependency와 허용 section: `skill/game-gdd-html/scripts/profile_contracts.py`
+- 한국어 요청 라우팅 키워드: `skill/game-gdd-html/scripts/request_rules.py`
+- HTML 입력 계약: `skill/game-gdd-html/references/input-schema.md`
+- 기획과 구현의 경계: `skill/game-gdd-html/references/planning-authority-boundary.md`
+- 실무 문체와 비노출 규칙: `skill/game-gdd-html/references/practical-writing-style.md`
 
 문서와 스크립트의 계약이 달라지면 테스트가 실패하도록 구성되어 있다.
 
@@ -603,9 +608,9 @@ game-gdd-html/
 
 ## 변경 작업 권장 순서
 
-1. `scripts/kind_contracts.py` 또는 `scripts/profile_contracts.py`의 계약을 수정한다.
-2. 관련 `references/kinds/` 또는 `references/profiles/` 문서를 맞춘다.
-3. 라우팅이 바뀌면 `scripts/request_rules.py`를 수정한다.
+1. `skill/game-gdd-html/scripts/kind_contracts.py` 또는 `skill/game-gdd-html/scripts/profile_contracts.py`의 계약을 수정한다.
+2. 관련 `skill/game-gdd-html/references/kinds/` 또는 `skill/game-gdd-html/references/profiles/` 문서를 맞춘다.
+3. 라우팅이 바뀌면 `skill/game-gdd-html/scripts/request_rules.py`를 수정한다.
 4. 회귀 테스트를 추가하거나 기존 기대값을 갱신한다.
 5. 세 테스트 스크립트를 모두 실행한다.
 6. 대표 요청을 해석하고 HTML을 렌더·검증한다.
@@ -621,11 +626,11 @@ game-gdd-html/
 
 기여 전 다음 문서를 확인한다.
 
-- [기여 가이드](CONTRIBUTING.md)
-- [행동강령](CODE_OF_CONDUCT.md)
-- [보안 정책](SECURITY.md)
-- [지원 안내](SUPPORT.md)
-- [변경 이력](CHANGELOG.md)
+- [기여 가이드](.github/CONTRIBUTING.md)
+- [행동강령](.github/CODE_OF_CONDUCT.md)
+- [보안 정책](.github/SECURITY.md)
+- [지원 안내](.github/SUPPORT.md)
+- [변경 이력](docs/CHANGELOG.md)
 
 Issue는 Bug Report, Feature Request와 Document Kind Request 양식을 제공한다. Pull Request는 템플릿의 범위·호환성·검증 체크리스트를 작성해야 하며 Python 3.10·3.12·3.14 환경에서 자동 검증된다.
 

@@ -38,13 +38,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Validate skill manifest
-        run: python scripts/validate_skill.py .
+        run: python tools/validate_skill.py skill/game-gdd-html
 
       - name: Test request interpreter
-        run: python scripts/test_interpreter.py
+        run: python tests/test_interpreter.py
 
       - name: Test document kinds
-        run: python scripts/test_kinds.py
+        run: python tests/test_kinds.py
 
       - name: Test document profiles
-        run: python scripts/test_profiles.py
+        run: python tests/test_profiles.py
