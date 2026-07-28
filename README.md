@@ -417,23 +417,32 @@ OUTPUT HTML SPLIT;
 
 ## 스크립트 사용법
 
-### 1. 자연어 또는 GDDQL 해석
+### 1. 요청을 압축 작성 계약으로 컴파일
+
+```bash
+python skill/game-gdd-html/scripts/compile_context.py \
+  --text "장비 강화 UI 기획서를 작성해줘. 재화 부족과 결과 피드백을 포함해줘." \
+  --output-dir working
+```
+
+명령은 작은 manifest만 출력하고 `working/`에 다음 파일을 만든다.
+
+- `request-context.md`: 선택 문서의 목적·필수 결정·완료 조건·섹션별 최소 계약
+- `<번호>-<document>.json`: profile·kind·scope가 고정된 렌더러 입력 골격
+
+기본 작성 경로에서는 이 두 파일만 읽는다. 41종 kind와 12개 profile의 원본 계약은 유지하지만, 선택되지 않은 문서의 계약과 전체 입력 스키마를 모델 컨텍스트에 올리지 않는다. 컴파일 결과가 `needs-clarification`이면 생성된 질문 하나에 답한 뒤 원문과 함께 다시 실행한다.
+
+JSON 골격의 `[작성 필요]`를 실제 내용으로 모두 교체한다. 렌더러는 미교체 표시와 빈 섹션을 오류로 거부하므로 압축 때문에 내용이 빠진 채 결과물이 만들어지는 것을 차단한다.
+
+### 2. 전체 해석 결과 확인
+
+라우팅 디버깅이나 계약 개발 시에만 전체 해석 JSON을 확인한다.
 
 ```bash
 python skill/game-gdd-html/scripts/interpret_request.py \
   --text "장비 강화 UI 기획서를 작성해줘. 재화 부족과 결과 피드백을 포함해줘." \
   > request-plan.json
 ```
-
-주요 출력:
-
-- 선택된 profile과 kind
-- 문서별 계획
-- 키워드로 확정된 facet
-- 선택 섹션과 의존 섹션
-- 제외 충돌과 미결정 항목
-
-`request-plan.json`은 범위 계약이다. 완성된 기획서 본문이 아니며 최종 HTML에 그대로 노출되지 않는다.
 
 정규화된 GDDQL만 확인하려면:
 
@@ -443,7 +452,7 @@ python skill/game-gdd-html/scripts/interpret_request.py \
   --format gddql
 ```
 
-### 2. 구조화 JSON을 HTML로 렌더
+### 3. 구조화 JSON을 HTML로 렌더
 
 ```bash
 python skill/game-gdd-html/scripts/render_gdd.py \
@@ -453,7 +462,7 @@ python skill/game-gdd-html/scripts/render_gdd.py \
 
 입력 JSON 계약은 [`skill/game-gdd-html/references/input-schema.md`](skill/game-gdd-html/references/input-schema.md)를 따른다.
 
-### 3. HTML 검증
+### 4. HTML 검증
 
 ```bash
 python skill/game-gdd-html/scripts/validate_gdd.py \
@@ -482,6 +491,7 @@ JSON 형식의 검증 결과가 필요하면 `--json`을 추가한다.
 ```bash
 python tools/validate_skill.py skill/game-gdd-html
 python tests/test_interpreter.py
+python tests/test_context_compiler.py
 python tests/test_kinds.py
 python tests/test_profiles.py
 ```
@@ -489,6 +499,9 @@ python tests/test_profiles.py
 검증 범위:
 
 - 자연어와 GDDQL 해석
+- 전체 계약과 압축 작성 계약의 41종 kind·12개 profile 동등성
+- 대표 작성 컨텍스트의 80% 이상 크기 절감
+- 미작성 표시와 빈 섹션의 렌더 차단
 - 한국어 문서명과 별칭 라우팅
 - 41개 document kind 계약
 - 12개 profile 렌더링
@@ -523,7 +536,7 @@ game-gdd-html/
 │     ├─ references/
 │     │  ├─ kinds/                # 9개 문서 카테고리 계약
 │     │  └─ profiles/             # 12개 영역별 섹션 계약
-│     └─ scripts/                 # 스킬 실행에 필요한 런타임
+│     └─ scripts/                 # 압축 컴파일러·렌더러·검증 런타임
 ├─ tests/                          # 저장소 회귀 테스트
 ├─ tools/                          # 저장소 유지보수 도구
 └─ docs/
@@ -535,6 +548,7 @@ game-gdd-html/
 - kind 이름, profile 매핑, 기본 facet, 산출물과 핸드오프: `skill/game-gdd-html/scripts/kind_contracts.py`
 - profile별 core, facet, dependency와 허용 section: `skill/game-gdd-html/scripts/profile_contracts.py`
 - 한국어 요청 라우팅 키워드: `skill/game-gdd-html/scripts/request_rules.py`
+- 선택 문서용 압축 작성 계약과 JSON 골격: `skill/game-gdd-html/scripts/compile_context.py`
 - HTML 입력 계약: `skill/game-gdd-html/references/input-schema.md`
 - 기획과 구현의 경계: `skill/game-gdd-html/references/planning-authority-boundary.md`
 - 실무 문체와 비노출 규칙: `skill/game-gdd-html/references/practical-writing-style.md`
@@ -604,6 +618,10 @@ game-gdd-html/
 
 아니다. 최신 시장 정보, 법률, 플랫폼 정책, 실제 경쟁작 정보처럼 외부 사실이 결과를 바꿀 때만 조사한다. 확인한 사실에는 출처와 확인일을 붙이고 사실·해석·제안을 구분한다.
 
+### 토큰을 줄이면 기획서 내용도 줄어드나?
+
+아니다. 줄이는 대상은 선택되지 않은 문서 종류의 계약, 전체 입력 스키마와 중복 작업 지시다. 선택된 kind의 필수 산출물·제외 범위·완료 조건, profile의 선택 섹션·최소 완료 조건과 시각화 정책은 압축 계약에 그대로 남는다. 41종 kind와 12개 profile 전체를 대상으로 원본 계약과의 동등성 테스트를 실행하며, 미작성 표시나 빈 섹션은 렌더 단계에서 차단한다.
+
 ---
 
 ## 변경 작업 권장 순서
@@ -612,7 +630,7 @@ game-gdd-html/
 2. 관련 `skill/game-gdd-html/references/kinds/` 또는 `skill/game-gdd-html/references/profiles/` 문서를 맞춘다.
 3. 라우팅이 바뀌면 `skill/game-gdd-html/scripts/request_rules.py`를 수정한다.
 4. 회귀 테스트를 추가하거나 기존 기대값을 갱신한다.
-5. 세 테스트 스크립트를 모두 실행한다.
+5. 다섯 검증·테스트 스크립트를 모두 실행한다.
 6. 대표 요청을 해석하고 HTML을 렌더·검증한다.
 7. 브라우저에서 데스크톱, 모바일과 인쇄 화면을 확인한다.
 

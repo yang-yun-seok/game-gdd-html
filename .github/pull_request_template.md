@@ -23,6 +23,7 @@
 ```text
 python tools/validate_skill.py skill/game-gdd-html
 python tests/test_interpreter.py
+python tests/test_context_compiler.py
 python tests/test_kinds.py
 python tests/test_profiles.py
 ```

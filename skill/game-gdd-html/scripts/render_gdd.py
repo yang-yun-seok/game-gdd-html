@@ -602,6 +602,25 @@ def require_string_list(value: Any, path: str) -> list[str]:
     return result
 
 
+def find_authoring_placeholders(
+    value: Any,
+    path: str = "$",
+) -> list[str]:
+    matches: list[str] = []
+    if isinstance(value, str):
+        if "[작성 필요]" in value:
+            matches.append(path)
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            matches.extend(find_authoring_placeholders(item, f"{path}.{key}"))
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            matches.extend(
+                find_authoring_placeholders(item, f"{path}[{index}]")
+            )
+    return matches
+
+
 def default_output_path(
     data: dict[str, Any],
     directory: Path | None = None,
@@ -619,6 +638,11 @@ def default_output_path(
 
 
 def render_document(data: dict[str, Any], template: str) -> str:
+    placeholders = find_authoring_placeholders(data)
+    if placeholders:
+        raise RenderError(
+            "unresolved authoring placeholders: " + ", ".join(placeholders)
+        )
     document = require_object(data.get("document"), "document")
     title = require_nonempty(document.get("title"), "document.title")
     subtitle = require_nonempty(document.get("subtitle"), "document.subtitle")
@@ -857,7 +881,10 @@ def render_document(data: dict[str, Any], template: str) -> str:
         number = str(section.get("number", f"{index + 1:02d}"))
         section_title = require_nonempty(section.get("title"), f"{section_path}.title")
         section_subtitle = str(section.get("subtitle", "")).strip()
-        content = renderer.render_many(section.get("blocks", []), f"{section_path}.blocks")
+        blocks = section.get("blocks")
+        if not isinstance(blocks, list) or not blocks:
+            raise RenderError(f"{section_path}.blocks must be a non-empty array")
+        content = renderer.render_many(blocks, f"{section_path}.blocks")
         toc_html.append(
             f'<a class="toc-link" href="#{esc(section_id)}" data-section="{esc(section_id)}">'
             f'<span>{esc(number)}</span><strong>{esc(section_title)}</strong></a>'

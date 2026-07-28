@@ -161,15 +161,17 @@ PR 전 다음 명령을 모두 실행합니다.
 ```bash
 python tools/validate_skill.py skill/game-gdd-html
 python tests/test_interpreter.py
+python tests/test_context_compiler.py
 python tests/test_kinds.py
 python tests/test_profiles.py
 ```
 
-대표 요청의 해석 결과도 확인하는 것을 권장합니다.
+대표 요청의 압축 계약과 JSON 골격도 확인하는 것을 권장합니다.
 
 ```bash
-python skill/game-gdd-html/scripts/interpret_request.py \
-  --text "장비 강화 UI 기획서를 작성해줘. 재화 부족과 결과 피드백을 포함해줘."
+python skill/game-gdd-html/scripts/compile_context.py \
+  --text "장비 강화 UI 기획서를 작성해줘. 재화 부족과 결과 피드백을 포함해줘." \
+  --output-dir working
 ```
 
 렌더러를 수정한 경우 대표 JSON을 HTML로 렌더하고 검증합니다.

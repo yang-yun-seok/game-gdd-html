@@ -43,6 +43,9 @@ jobs:
       - name: Test request interpreter
         run: python tests/test_interpreter.py
 
+      - name: Test compact context compiler
+        run: python tests/test_context_compiler.py
+
       - name: Test document kinds
         run: python tests/test_kinds.py
 
