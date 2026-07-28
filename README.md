@@ -7,6 +7,8 @@
 ![Document kinds](https://img.shields.io/badge/Document%20Kinds-41-7C3AED)
 ![Profiles](https://img.shields.io/badge/Profiles-12-0F766E)
 ![Output](https://img.shields.io/badge/Output-HTML-F97316?logo=html5&logoColor=white)
+[![CI](https://github.com/yang-yun-seok/game-gdd-html/actions/workflows/ci.yml/badge.svg)](https://github.com/yang-yun-seok/game-gdd-html/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 `game-gdd-html`은 하나의 거대한 통합 GDD를 무조건 생성하는 도구가 아니다.
 
@@ -457,6 +459,7 @@ JSON 형식의 검증 결과가 필요하면 `--json`을 추가한다.
 ## 테스트
 
 ```bash
+python scripts/validate_skill.py .
 python scripts/test_interpreter.py
 python scripts/test_kinds.py
 python scripts/test_profiles.py
@@ -480,7 +483,17 @@ python scripts/test_profiles.py
 
 ```text
 game-gdd-html/
+├─ .github/
+│  ├─ ISSUE_TEMPLATE/        # 버그·기능·문서 종류 제안 양식
+│  ├─ workflows/ci.yml       # Python 자동 검증
+│  └─ pull_request_template.md
 ├─ SKILL.md
+├─ LICENSE
+├─ CONTRIBUTING.md
+├─ CODE_OF_CONDUCT.md
+├─ SECURITY.md
+├─ SUPPORT.md
+├─ CHANGELOG.md
 ├─ agents/
 │  └─ openai.yaml
 ├─ assets/
@@ -506,6 +519,7 @@ game-gdd-html/
    ├─ profile_contracts.py
    ├─ render_gdd.py
    ├─ validate_gdd.py
+   ├─ validate_skill.py
    ├─ test_interpreter.py
    ├─ test_kinds.py
    └─ test_profiles.py
@@ -601,6 +615,28 @@ game-gdd-html/
 
 ---
 
+## 기여
+
+버그 수정, 신규 문서 종류, 라우팅 개선, HTML 접근성과 문서 개선을 환영한다.
+
+기여 전 다음 문서를 확인한다.
+
+- [기여 가이드](CONTRIBUTING.md)
+- [행동강령](CODE_OF_CONDUCT.md)
+- [보안 정책](SECURITY.md)
+- [지원 안내](SUPPORT.md)
+- [변경 이력](CHANGELOG.md)
+
+Issue는 Bug Report, Feature Request와 Document Kind Request 양식을 제공한다. Pull Request는 템플릿의 범위·호환성·검증 체크리스트를 작성해야 하며 Python 3.10·3.12·3.14 환경에서 자동 검증된다.
+
+---
+
+## 라이선스
+
+이 프로젝트는 [MIT License](LICENSE)로 배포된다. 라이선스 조건에 따라 사용, 수정, 배포와 파생 작업이 가능하다.
+
+---
+
 ## 현재 상태
 
 - 41개 세부 문서 종류 지원
@@ -609,6 +645,7 @@ game-gdd-html/
 - 종류별 독립 HTML 출력
 - 범위 메타데이터 기반 자동 검증
 - Python 표준 라이브러리만 사용
-- Windows 환경 회귀 테스트 통과
+- GitHub Actions 기반 다중 Python 버전 회귀 테스트
+- MIT 라이선스와 공개 기여 워크플로
 
 이 저장소는 게임 기획 문서를 “길게 쓰는 것”보다 **올바른 종류의 문서에 필요한 결정만 남기는 것**을 우선한다.

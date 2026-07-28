@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 사용법과 설치 문서
+    url: https://github.com/yang-yun-seok/game-gdd-html#readme
+    about: 설치, 자연어 요청, GDDQL과 CLI 사용법을 먼저 확인해 주세요.
+  - name: 비공개 보안 신고
+    url: https://github.com/yang-yun-seok/game-gdd-html/security/advisories/new
+    about: 취약점과 민감한 보안 문제는 공개 Issue 대신 이 경로로 신고해 주세요.
