@@ -8,6 +8,8 @@
 
 ### Added
 
+- 설치된 Chrome·Edge와 Playwright 런타임을 재사용하는 단일 대형 페이지 PDF 내보내기
+- PDF 페이지 수를 검사하고 불완전한 출력을 정리하는 안전장치
 - 선택된 문서 계약만 추출하는 토큰 효율형 `compile_context.py`
 - 정확한 profile·kind·scope를 포함한 문서별 JSON 작성 골격
 - 41종 kind·12개 profile의 원본·압축 계약 동등성 및 컨텍스트 절감 회귀 테스트
@@ -23,6 +25,8 @@
 
 ### Changed
 
+- 정적 HTML 골격을 압축하고 실제 사용하는 Mermaid·Chart.js만 불러오도록 렌더링 최적화
+- 차트 애니메이션을 비활성화해 HTML·PDF 렌더 결과의 재현성 강화
 - 기본 작성 흐름을 전체 참고 문서 로딩에서 압축 작성 계약 로딩으로 변경
 - `SKILL.md`를 선택 계약 컴파일·작성·검증 중심의 얇은 라우터로 축소
 - 설치 가능한 스킬을 `skill/game-gdd-html/`로 분리

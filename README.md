@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Document kinds](https://img.shields.io/badge/Document%20Kinds-41-7C3AED)
 ![Profiles](https://img.shields.io/badge/Profiles-12-0F766E)
-![Output](https://img.shields.io/badge/Output-HTML-F97316?logo=html5&logoColor=white)
+![Output](https://img.shields.io/badge/Output-HTML%20%2B%20PDF-F97316?logo=html5&logoColor=white)
 [![CI](https://github.com/yang-yun-seok/game-gdd-html/actions/workflows/ci.yml/badge.svg)](https://github.com/yang-yun-seok/game-gdd-html/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -107,20 +107,25 @@
 
 기술 판단이 필요한 항목은 플레이어 관찰 결과와 기술중립적 품질조건까지만 작성하고 **개발 협의**로 전달한다.
 
-### 5. 실무형 단일 HTML
+### 5. 최적화 HTML과 단일 페이지 PDF
 
-출력물은 공유와 리뷰가 쉬운 단일 HTML 파일이다.
+기본 출력물은 공유와 리뷰가 쉬운 단일 HTML 파일이며, 요청하면 문서 전체를 끊지 않고 한 장의 대형 PDF로 내보낸다.
 
 - 반응형 레이아웃
 - 문서 내 목차와 앵커 이동
-- 인쇄·PDF 변환을 고려한 스타일
+- 공백뿐인 정적 소스와 불필요한 들여쓰기를 제거한 경량 출력
 - 필요할 때만 사용하는 Mermaid 다이어그램
 - 필요할 때만 사용하는 Chart.js 차트
 - 차트와 함께 제공되는 데이터 표
 - 문서 종류와 범위를 확인할 수 있는 내부 메타데이터
 - 데스크톱·모바일 가독성
+- 자동 폭 조정과 정확한 1페이지 검증을 거치는 PDF 출력
 
-Mermaid, Chart.js, Pretendard 웹폰트는 CDN을 사용한다. 네트워크가 없는 환경에서도 본문과 데이터 표는 읽을 수 있지만 외부 라이브러리를 사용하는 시각 요소와 웹폰트는 제한될 수 있다.
+렌더러는 실제 문서에 시각화가 있을 때만 Mermaid 또는 Chart.js를 불러온다. 원문·표·사용자가 작성한 HTML은 건드리지 않고 정적 템플릿만 압축하며, 대표 회귀 문서에서 HTML 골격 크기를 약 23% 줄였다.
+
+최적화 방향은 [Ponytail](https://github.com/DietrichGebert/ponytail)의 플랫폼 기능 재사용·의존성 최소화 원칙을 참고했으며, 이 저장소의 렌더러와 검증 계약에 맞게 독립 구현했다.
+
+Mermaid, Chart.js, Pretendard 웹폰트는 CDN을 사용한다. 네트워크가 없는 환경에서도 본문과 데이터 표는 읽을 수 있지만 외부 라이브러리를 사용하는 시각 요소와 웹폰트는 제한될 수 있다. PDF 내보내기는 Codex에 포함되었거나 로컬에 설치된 Playwright와 Chrome·Edge를 재사용하므로 별도 PDF 프레임워크를 추가하지 않는다.
 
 ---
 
@@ -139,6 +144,8 @@ flowchart LR
     H --> I["구조 · 범위 자동 검증"]
     I --> J["의미 검토 · 시각 QA"]
     J --> K["종류별 독립 HTML 전달"]
+    K --> L{"PDF 요청?"}
+    L -- "예" --> M["한 장짜리 대형 PDF 출력·검증"]
 ```
 
 ---
@@ -268,8 +275,9 @@ flowchart LR
 - Python 3.10 이상
 - Git(저장소 clone·업데이트 시)
 - HTML을 확인할 최신 브라우저
+- PDF 출력 시 Node.js 18 이상, Playwright와 Chrome 또는 Edge
 
-Python 스크립트는 표준 라이브러리만 사용하므로 별도의 `pip install`이 필요하지 않다.
+Python 스크립트는 표준 라이브러리만 사용하므로 별도의 `pip install`이 필요하지 않다. Codex Desktop은 PDF 출력에 필요한 번들 Node·Playwright 경로를 우선 재사용한다.
 
 ### 스킬만 설치
 
@@ -484,6 +492,30 @@ JSON 형식의 검증 결과가 필요하면 `--json`을 추가한다.
 - 차트·다이어그램의 구조적 유효성
 - 프로젝트 브리프와 내부 라우팅 문구의 노출 여부
 
+### 5. 한 장짜리 대형 PDF로 내보내기
+
+검증을 통과한 HTML을 입력으로 사용한다. PDF는 A4 여러 장으로 나누지 않고 문서 전체가 이어진 하나의 페이지로 생성된다.
+
+```bash
+node skill/game-gdd-html/scripts/export_pdf.cjs \
+  output/Project_ui-spec_GDD_YYYYMMDD.html \
+  -o output/Project_ui-spec_GDD_YYYYMMDD.pdf
+```
+
+Playwright가 기본 탐색 경로에 없다면 Codex 또는 로컬 Node 런타임의 모듈 경로를 지정한다.
+
+```bash
+node skill/game-gdd-html/scripts/export_pdf.cjs \
+  output/Project_ui-spec_GDD_YYYYMMDD.html \
+  -o output/Project_ui-spec_GDD_YYYYMMDD.pdf \
+  --node-modules <node_modules 경로>
+```
+
+- 기본 폭은 `1120px`이며 내용이 지나치게 길면 최대 `2400px`까지 자동으로 넓어진다.
+- Mermaid·Chart.js·웹폰트 렌더를 기다린 뒤 출력한다.
+- 결과 PDF가 정확히 한 페이지가 아니면 실패로 처리하고 불완전한 파일을 제거한다.
+- 기존 출력 파일은 덮어쓰지 않는다.
+
 ---
 
 ## 테스트
@@ -494,6 +526,7 @@ python tests/test_interpreter.py
 python tests/test_context_compiler.py
 python tests/test_kinds.py
 python tests/test_profiles.py
+node skill/game-gdd-html/scripts/export_pdf.cjs --self-test
 ```
 
 검증 범위:
@@ -510,6 +543,8 @@ python tests/test_profiles.py
 - 종류·프로필 불일치 차단
 - 선택되지 않은 섹션 혼입 차단
 - 내부 메타정보의 본문 노출 차단
+- HTML 압축과 미사용 시각화 라이브러리 제거
+- PDF 인수·인쇄 스타일·페이지 수 판정 회귀
 
 ---
 
@@ -519,7 +554,7 @@ python tests/test_profiles.py
 game-gdd-html/
 ├─ .github/
 │  ├─ ISSUE_TEMPLATE/             # 버그·기능·문서 종류 제안 양식
-│  ├─ workflows/ci.yml            # Python 자동 검증
+│  ├─ workflows/ci.yml            # Python·Node 자동 검증
 │  ├─ CONTRIBUTING.md
 │  ├─ CODE_OF_CONDUCT.md
 │  ├─ SECURITY.md
@@ -536,7 +571,7 @@ game-gdd-html/
 │     ├─ references/
 │     │  ├─ kinds/                # 9개 문서 카테고리 계약
 │     │  └─ profiles/             # 12개 영역별 섹션 계약
-│     └─ scripts/                 # 압축 컴파일러·렌더러·검증 런타임
+│     └─ scripts/                 # 컴파일·렌더·검증·PDF 출력 런타임
 ├─ tests/                          # 저장소 회귀 테스트
 ├─ tools/                          # 저장소 유지보수 도구
 └─ docs/
@@ -610,6 +645,10 @@ game-gdd-html/
 
 권장하지 않는다. 구조화 JSON을 수정한 뒤 다시 렌더하고 검증해야 범위 계약과 본문이 일치한다.
 
+### PDF가 A4 여러 장으로 나뉘나?
+
+아니다. `export_pdf.cjs`는 문서 높이를 측정하고 폭을 조정해 전체 기획서를 하나의 연속된 대형 페이지로 만든다. 인쇄용 A4 묶음이 필요하면 브라우저의 일반 인쇄 기능을 사용한다.
+
 ### 복수 문서를 하나로 합칠 수 있나?
 
 기본값은 `SPLIT`이다. 같은 profile의 일반 문서를 합칠 수는 있지만, 서로 다른 kind의 계약과 본문은 독립적으로 유지하는 것을 원칙으로 한다.
@@ -630,7 +669,7 @@ game-gdd-html/
 2. 관련 `skill/game-gdd-html/references/kinds/` 또는 `skill/game-gdd-html/references/profiles/` 문서를 맞춘다.
 3. 라우팅이 바뀌면 `skill/game-gdd-html/scripts/request_rules.py`를 수정한다.
 4. 회귀 테스트를 추가하거나 기존 기대값을 갱신한다.
-5. 다섯 검증·테스트 스크립트를 모두 실행한다.
+5. Python 검증·테스트와 PDF 내보내기 자체 테스트를 모두 실행한다.
 6. 대표 요청을 해석하고 HTML을 렌더·검증한다.
 7. 브라우저에서 데스크톱, 모바일과 인쇄 화면을 확인한다.
 
@@ -665,10 +704,11 @@ Issue는 Bug Report, Feature Request와 Document Kind Request 양식을 제공�
 - 41개 세부 문서 종류 지원
 - 12개 문서 프로필 지원
 - 자연어·GDDQL 입력 지원
-- 종류별 독립 HTML 출력
+- 종류별 독립 최적화 HTML 출력
+- 한 장짜리 대형 PDF 출력과 페이지 수 검증
 - 범위 메타데이터 기반 자동 검증
-- Python 표준 라이브러리만 사용
-- GitHub Actions 기반 다중 Python 버전 회귀 테스트
+- HTML 경로는 Python 표준 라이브러리만 사용
+- GitHub Actions 기반 다중 Python·Node 회귀 테스트
 - MIT 라이선스와 공개 기여 워크플로
 
 이 저장소는 게임 기획 문서를 “길게 쓰는 것”보다 **올바른 종류의 문서에 필요한 결정만 남기는 것**을 우선한다.

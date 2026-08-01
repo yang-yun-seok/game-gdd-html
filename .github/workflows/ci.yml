@@ -51,3 +51,6 @@ jobs:
 
       - name: Test document profiles
         run: python tests/test_profiles.py
+
+      - name: Test one-page PDF exporter
+        run: node skill/game-gdd-html/scripts/export_pdf.cjs --self-test

@@ -1,6 +1,6 @@
 ---
 name: game-gdd-html
-description: 신규 게임 아이디어를 자연어 또는 GDDQL로 해석해 요청한 종류와 범위만 담은 독립 HTML 기획서를 생성·검증한다. 게임 제안서·콘셉트·GDD·일정·시스템·전투·콘텐츠·밸런스·경제·UI/UX·스토리·데이터·로그·운영 기획 요청에 사용한다. 전체·통합·마스터 GDD가 명시된 경우에만 full을 선택하며 출시작 역분석은 game-reverse-gdd를 우선한다.
+description: 신규 게임 아이디어를 자연어 또는 GDDQL로 해석해 요청한 종류와 범위만 담은 최적화 HTML 기획서를 생성·검증하고, 요청 시 한 장짜리 대형 PDF로 내보낸다. 게임 제안서·콘셉트·GDD·일정·시스템·전투·콘텐츠·밸런스·경제·UI/UX·스토리·데이터·로그·운영 기획 요청에 사용한다. 전체·통합·마스터 GDD가 명시된 경우에만 full을 선택하며 출시작 역분석은 game-reverse-gdd를 우선한다.
 ---
 
 # 게임 기획서 HTML 컴파일러
@@ -72,6 +72,20 @@ python "$SKILL_DIR/scripts/validate_gdd.py" \
 
 일반 profile 문서는 `--kind`를 생략한다. 렌더 오류와 검증 오류가 0개가 될 때까지 JSON만 수정하고 HTML을 직접 고치지 않는다.
 
+PDF를 요청받았을 때만 검증을 통과한 HTML을 한 장짜리 대형 페이지로 내보낸다. Codex Desktop에서는 먼저 번들 Node·node_modules 경로를 확인해 사용한다.
+
+```bash
+node "$SKILL_DIR/scripts/export_pdf.cjs" \
+  output/<project>_<document>_GDD_YYYYMMDD.html \
+  -o output/<project>_<document>_GDD_YYYYMMDD.pdf \
+  --node-modules <node_modules>
+```
+
+- 출력 경로에 파일이 이미 있으면 다른 이름을 사용한다. 덮어쓰지 않는다.
+- 내보내기는 Mermaid·Chart.js·웹폰트를 기다린 뒤 페이지 폭을 자동 조정한다.
+- `One page` 성공 로그를 확인하고 PDF를 이미지로 렌더해 잘림·겹침·빈 영역을 시각 검수한다.
+- 기본 상한에서 실패할 때만 `--max-width-px` 또는 `--max-height-px`를 조정한다.
+
 수리는 오류가 지목한 JSON 경로만 고친다. 같은 오류가 두 번 남거나 압축 계약에 필요한 정보가 없을 때만 아래 원본 하나를 추가로 읽는다.
 
 | 상황 | 추가 파일 |
@@ -91,6 +105,7 @@ python "$SKILL_DIR/scripts/validate_gdd.py" \
 - kind 필수 산출물과 인접 문서 연결을 내부적으로 대조한다.
 - 구현 방식과 내부 분류 용어가 사용자 본문에 없는지 확인한다.
 - 브라우저에서 데스크톱·모바일·목차·표·Mermaid·Chart.js·인쇄 화면을 확인한다.
+- PDF 요청이면 정확히 한 페이지인지와 전체 문서의 시각 품질을 확인한다.
 - 기존 사용자 파일을 덮어쓰지 않는다.
 
-최종 응답은 `문서 종류: <한국어 문서명>`으로 시작하고 HTML 링크, 핵심 범위, 검토할 가정, 자동 검증 결과와 사용자 결정 2~4개만 전달한다. GDDQL과 중간 JSON은 요청받았을 때만 제공한다.
+최종 응답은 `문서 종류: <한국어 문서명>`으로 시작하고 HTML 링크, 요청 시 PDF 링크, 핵심 범위, 검토할 가정, 자동 검증 결과와 사용자 결정 2~4개만 전달한다. GDDQL과 중간 JSON은 요청받았을 때만 제공한다.

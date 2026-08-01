@@ -165,8 +165,36 @@ def render_to(path: Path, data: dict[str, object], template: str) -> None:
     path.write_text(render_document(data, template), encoding="utf-8", newline="\n")
 
 
+def check_output_optimization(template: str) -> None:
+    data = make_data("system")
+    for section in data["sections"]:  # type: ignore[index]
+        section["blocks"] = [  # type: ignore[index]
+            block
+            for block in section["blocks"]  # type: ignore[index]
+            if block["type"] not in {"mermaid", "chart"}
+        ]
+    compact = render_document(data, template)
+    pretty = render_document(data, template, compact=False)
+    if len(compact) >= len(pretty) * 0.85:
+        raise AssertionError("compact HTML did not reduce source size by at least 15%")
+    if "mermaid.min.js" in compact or "chart.umd.min.js" in compact:
+        raise AssertionError("unused visualization libraries were loaded")
+
+    chart_profile = next(
+        profile
+        for profile in PROFILE_NAMES
+        if PROFILE_RULES[profile]["chart_policy"] in {"required", "recommended"}
+    )
+    visual = render_document(make_data(chart_profile), template)
+    if "mermaid.min.js" not in visual or "chart.umd.min.js" not in visual:
+        raise AssertionError("used visualization libraries were omitted")
+    if '"animation":false' not in visual:
+        raise AssertionError("chart animation was not disabled for deterministic output")
+
+
 def main() -> int:
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    check_output_optimization(template)
     for profile, rule in PROFILE_RULES.items():
         profile_doc = (
             SCRIPT_DIR.parent / "references" / "profiles" / f"{profile}.md"
@@ -557,6 +585,7 @@ def main() -> int:
         "[OK] Filtered scope, core, selected-section, facet, "
         "and metadata guards passed"
     )
+    print("[OK] Compact HTML and conditional visualization loading passed")
     return 0
 
 

@@ -133,6 +133,7 @@ def slugify(value: str) -> str:
 class BlockRenderer:
     def __init__(self, labels: dict[str, str]) -> None:
         self.labels = labels
+        self.mermaid_count = 0
         self.chart_counter = 0
         self.chart_configs: list[dict[str, Any]] = []
 
@@ -335,6 +336,7 @@ class BlockRenderer:
     def render_mermaid(self, block: dict[str, Any], path: str) -> str:
         title = self.require_text(block, "title", path)
         code = self.require_text(block, "code", path)
+        self.mermaid_count += 1
         caption = (
             f"<figcaption>{paragraph_text(block['caption'])}</figcaption>"
             if block.get("caption")
@@ -390,6 +392,7 @@ class BlockRenderer:
             configured_datasets.append(item)
 
         default_options: dict[str, Any] = {
+            "animation": False,
             "responsive": True,
             "maintainAspectRatio": False,
             "interaction": {"mode": "index", "intersect": False},
@@ -637,7 +640,21 @@ def default_output_path(
     )
 
 
-def render_document(data: dict[str, Any], template: str) -> str:
+def compact_template(template: str) -> str:
+    """Remove source indentation without touching generated document content."""
+    return "\n".join(
+        line.lstrip()
+        for line in template.splitlines()
+        if line.strip()
+    ) + "\n"
+
+
+def render_document(
+    data: dict[str, Any],
+    template: str,
+    *,
+    compact: bool = True,
+) -> str:
     placeholders = find_authoring_placeholders(data)
     if placeholders:
         raise RenderError(
@@ -1066,6 +1083,18 @@ def render_document(data: dict[str, Any], template: str) -> str:
             data.get("footer_note", "Generated with game-gdd-html")
         ),
         "CHART_CONFIGS": chart_json,
+        "MERMAID_SCRIPT": (
+            '<script defer src="https://cdn.jsdelivr.net/npm/mermaid@10/'
+            'dist/mermaid.min.js"></script>'
+            if renderer.mermaid_count
+            else ""
+        ),
+        "CHART_SCRIPT": (
+            '<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/'
+            'dist/chart.umd.min.js"></script>'
+            if renderer.chart_configs
+            else ""
+        ),
         "MENU_LABEL": esc(labels["menu"]),
         "CLOSE_LABEL": esc(labels["close"]),
         "CONTENTS_LABEL": esc(labels["contents"]),
@@ -1077,7 +1106,7 @@ def render_document(data: dict[str, Any], template: str) -> str:
         "CONFIDENTIALITY_LABEL": esc(labels["confidentiality"]),
         "BACK_TO_TOP_LABEL": esc(labels["back_to_top"]),
     }
-    output = template
+    output = compact_template(template) if compact else template
     for key, value in values.items():
         output = output.replace("{{" + key + "}}", value)
     leftovers = sorted(set(PLACEHOLDER.findall(output)))
@@ -1097,6 +1126,11 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         help="Optional template path; defaults to ../assets/gdd-template.html",
     )
+    parser.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Keep template indentation for source debugging",
+    )
     return parser.parse_args()
 
 
@@ -1113,7 +1147,7 @@ def main() -> int:
         if not isinstance(data, dict):
             raise RenderError("top-level JSON value must be an object")
         template = template_path.read_text(encoding="utf-8")
-        output_html = render_document(data, template)
+        output_html = render_document(data, template, compact=not args.pretty)
         if args.output:
             output_path = args.output
         else:
