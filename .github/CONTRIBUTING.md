@@ -35,6 +35,7 @@
 
 - Git
 - Python 3.10 이상
+- Node.js 18 이상(PDF 내보내기 변경 시)
 - 최신 브라우저
 
 Python 런타임 코드는 표준 라이브러리만 사용합니다. 별도의 패키지 설치는 필요하지 않습니다.
@@ -164,6 +165,7 @@ python tests/test_interpreter.py
 python tests/test_context_compiler.py
 python tests/test_kinds.py
 python tests/test_profiles.py
+node skill/game-gdd-html/scripts/export_pdf.cjs --self-test
 ```
 
 대표 요청의 압축 계약과 JSON 골격도 확인하는 것을 권장합니다.
@@ -195,6 +197,7 @@ python skill/game-gdd-html/scripts/validate_gdd.py \
 - Mermaid·Chart.js 렌더
 - 브라우저 콘솔 오류
 - 인쇄 미리보기
+- PDF 내보내기 결과가 정확히 한 페이지인지
 - 긴 한국어 제목과 표
 
 ## 코드와 문서 스타일

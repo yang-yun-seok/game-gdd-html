@@ -26,6 +26,7 @@ python tests/test_interpreter.py
 python tests/test_context_compiler.py
 python tests/test_kinds.py
 python tests/test_profiles.py
+node skill/game-gdd-html/scripts/export_pdf.cjs --self-test
 ```
 
 ## 렌더 결과
