@@ -4,6 +4,8 @@
 
 자동 검증이 다루지 못하는 kind별 의사결정 완결성, 소유 경계, profile·scope 일치를 검사한다. 문서를 다시 쓰지 않고 수정 대상을 정확히 분류한다.
 
+[design-depth.md](design-depth.md)의 `review` 기준으로 실제 본문 경로와 판정 이유를 기록한다. 정상·경계 사례의 결과를 본문만으로 도출하고 수치 예제를 재계산한다. 수정본은 [revision-workflow.md](revision-workflow.md)에 따라 변경 전후와 파생 영향을 대조한다. 자동 HTML 검증 결과만으로 의미 검토를 통과시키지 않는다.
+
 ## 입력
 
 - Prompt 05의 렌더러 JSON, RoutePlan과 대상 ScopePlan

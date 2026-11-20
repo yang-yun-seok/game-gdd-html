@@ -12,6 +12,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 from typing import Any
 
+from document_source import load_document
 from kind_contracts import KIND_CONTRACTS, KIND_NAMES
 from profile_contracts import (
     ALL_CANONICAL_SECTION_IDS,
@@ -20,6 +21,7 @@ from profile_contracts import (
     build_section_plan,
 )
 from render_gdd import KIND_LABELS_EN, PROFILE_LABELS_KO
+from scenario_review import check_scenarios
 
 AUTHORITY_BOUNDARY_KO = (
     "게임 규칙과 사용자 결과를 정의한다. 구현 방식은 개발 협의에서 확정한다."
@@ -250,9 +252,19 @@ def validate(
     profile: str | None = None,
     require_scope: bool = False,
     kind: str | None = None,
+    scenario_review: Path | None = None,
 ) -> Results:
     requested_kind = (kind or "").strip()
     results = Results(profile or "auto", requested_kind)
+    if scenario_review is not None:
+        try:
+            review = json.loads(scenario_review.read_text(encoding="utf-8-sig"))
+            issues = check_scenarios(load_document(path), review)
+            results.errors.extend(issues)
+            if not issues:
+                results.passes.append("Scenario evidence quotes and recorded outcomes agree")
+        except (ValueError, OSError) as error:
+            results.errors.append(f"Could not verify scenario review: {error}")
     if profile is not None and profile not in PROFILE_RULES:
         results.errors.append(
             "Unknown requested profile. Expected one of: " + ", ".join(PROFILE_NAMES)
@@ -873,6 +885,8 @@ def parse_args() -> argparse.Namespace:
         description="Validate a rendered game design document HTML file."
     )
     parser.add_argument("html", type=Path, help="Rendered HTML file")
+    parser.add_argument("--scenario-review", type=Path,
+                        help="Verify cited source text and outcomes in the author's scenario review JSON")
     parser.add_argument(
         "--profile",
         choices=PROFILE_NAMES,
@@ -916,6 +930,7 @@ def main() -> int:
         args.profile,
         require_scope=args.require_scope,
         kind=args.kind,
+        scenario_review=args.scenario_review,
     )
     payload = results.as_dict(args.html)
     if args.json:

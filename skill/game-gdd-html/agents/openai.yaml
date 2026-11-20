@@ -1,4 +1,4 @@
 interface:
-  display_name: "종류별 게임 기획서 HTML·PDF"
-  short_description: "41종 계약에 맞는 최적화 HTML과 단일 페이지 PDF 생성"
-  default_prompt: "Use $game-gdd-html to classify my requested game-document kind, create a focused Korean HTML design document, and export a one-page PDF when requested."
+  display_name: "게임 기획서 작성·심화·수정"
+  short_description: "규칙·예외·수치 검증을 갖춘 HTML 기획서 작성과 기존 문서 수정"
+  default_prompt: "Use $game-gdd-html to create or revise a focused Korean game design document with concrete rules, worked examples, and acceptance criteria, preserving existing decisions and checking change impacts when revising."

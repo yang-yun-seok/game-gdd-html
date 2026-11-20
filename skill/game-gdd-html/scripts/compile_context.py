@@ -218,6 +218,14 @@ def _build_scaffold(
     }
 
 
+def depth_contract(profile: str, skill_root: Path = SKILL_ROOT) -> str:
+    """Load only shared depth criteria and the selected profile's lens."""
+    source = (skill_root / "references" / "design-depth.md").read_text(encoding="utf-8")
+    parts = re.split(r"^## (\S+)\s*$", source, flags=re.MULTILINE)
+    sections = dict(zip(parts[1::2], parts[2::2]))
+    return sections["common"].strip() + "\n\n" + sections[profile].strip()
+
+
 def _document_context(
     result: dict[str, Any],
     plan: dict[str, Any],
@@ -265,6 +273,7 @@ def _document_context(
         "kind": kind_name,
         "profile": plan["profile"],
         "request_context": result["query"]["context"],
+        "assumptions": dict(result["query"]["assumptions"]),
         "scope": {
             "facets": list(plan["facets"]),
             "excluded_facets": list(plan["exclude_facets"]),
@@ -276,6 +285,7 @@ def _document_context(
         "authority": SPECIAL_AUTHORITY.get(kind_name),
         "visual_contract": visual_contract,
         "authoring_rules": list(AUTHORING_RULES),
+        "depth_contract": depth_contract(plan["profile"], skill_root),
         "block_palette": list(BLOCK_PALETTE),
         "quality_gates": quality_gates,
         "scaffold": _build_scaffold(plan, profile_contract),
@@ -378,6 +388,10 @@ def render_markdown(context: dict[str, Any]) -> str:
         ]
         if context_items:
             lines.extend(["", "### 요청 맥락", "", *_render_items(context_items)])
+        if document["assumptions"]:
+            lines.extend(["", "### 사용자 지정 가정", "",
+                          "현재 문서 범위에 해당하는 값은 단위와 가정 상태를 유지한다."])
+            lines.extend(f"- {key} = {value}" for key, value in document["assumptions"].items())
         if document["scope"]["excluded_facets"]:
             lines.append(
                 "- 제외 facet: "
@@ -446,6 +460,10 @@ def render_markdown(context: dict[str, Any]) -> str:
                 "### 전달 전 확인",
                 "",
                 *_render_items(document["quality_gates"]),
+                "",
+                "### 기획 깊이",
+                "",
+                document["depth_contract"],
             ]
         )
     return "\n".join(lines).rstrip() + "\n"

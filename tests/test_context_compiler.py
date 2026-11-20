@@ -143,6 +143,19 @@ class ContractEquivalenceTests(unittest.TestCase):
 
 
 class ContextEfficiencyTests(unittest.TestCase):
+    def test_assumptions_reach_the_saved_authoring_pack_for_split_documents(self) -> None:
+        query = ('DESIGN (system, ui-ux)\nABOUT "강화 결과"\n'
+                 'ASSUME result-animation="희귀도별 2.75초"\nASSUME retries="0회"\nOUTPUT HTML SPLIT;')
+        context = compile_context(query)
+        self.assertEqual(context["status"], "ready")
+        expected = {"result-animation": "희귀도별 2.75초", "retries": "0회"}
+        self.assertEqual([doc["assumptions"] for doc in context["documents"]], [expected, expected])
+        with tempfile.TemporaryDirectory() as folder:
+            manifest = write_authoring_pack(context, Path(folder))
+            instructions = Path(manifest["context"]).read_text(encoding="utf-8")
+        for key, value in expected.items():
+            self.assertEqual(instructions.count(f"- {key} = {value}"), 2)
+
     def test_complete_authoring_context_is_at_least_80_percent_smaller(
         self,
     ) -> None:

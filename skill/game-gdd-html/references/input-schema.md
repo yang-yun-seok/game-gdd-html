@@ -144,6 +144,8 @@ python "$SKILL_DIR/scripts/validate_gdd.py" output.html \
 
 ## 3. 최상위 렌더러 구조
 
+렌더된 HTML에는 이 JSON 전체가 비실행 `application/json` 데이터(`gdd-source`)로 포함된다. 편집 준비 도구는 본문·원본 체크섬을 검사해 복원하며, 수동 변경이 감지되면 원문 대조를 요구한다. 내부 품질 검토·변경 계획은 이 JSON에 추가하지 않고 작업 폴더에 별도로 저장한다. 기존 JSON 스키마에 새 필수 필드는 없다.
+
 ```json
 {
   "document": {
