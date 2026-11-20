@@ -136,16 +136,20 @@ def phrase_position(text: str, phrase: str) -> int | None:
     return spans[0][0] if spans else None
 
 
-def is_non_target_mention(text: str, start: int, end: int) -> bool:
-    """Return whether a document phrase is excluded or reference-only."""
+def is_excluded_mention(text: str, start: int, end: int) -> bool:
+    if re.search(r"(?:^|[.,;]\s*|\s)제외\s*:\s*$", text[:start]):
+        return True
+    return re.match(
+        r"^\s*(?:(?:은|는|을|를)\s*)?"
+        r"(?:제외(?!하지)|빼고|말고|없이|"
+        r"(?:(?:따로|별도(?:로)?)\s*)?(?:(?:작성|생성|포함)하지|만들지)\s*(?:마|말|않))",
+        text[end:],
+    ) is not None
+
+
+def is_reference_mention(text: str, start: int, end: int) -> bool:
     tail = text[end:]
     prefix = text[:start]
-    if re.match(
-        r"^\s*(?:(?:은|는|을|를)\s*)?"
-        r"(?:제외(?:하고|한|해|해서)?|빼고|말고|없이)",
-        tail,
-    ):
-        return True
     if re.match(
         r"^\s*(?:(?:은|는|을|를)\s*)?"
         r"(?:(?:후속(?:\s*문서)?|입력\s*문서)(?:로|인)?\s*)?"
@@ -177,9 +181,6 @@ def detect_kind_mentions(text: str) -> list[dict[str, Any]]:
             position = phrase_position(text, alias)
             if position is None:
                 continue
-            end = position + len(normalize_text(alias))
-            if is_non_target_mention(text, position, end):
-                continue
             candidate = (position, -len(normalize_text(alias)), alias)
             if best is None or candidate < best:
                 best = candidate
@@ -202,34 +203,32 @@ def detect_kind_mentions(text: str) -> list[dict[str, Any]]:
     return mentions
 
 
-def detect_non_target_kind_phrases(text: str) -> list[str]:
-    """Return explicit kind phrases used only as exclusions or references."""
-    phrases: list[str] = []
-    for kind_name in KIND_NAMES:
-        contract = KIND_CONTRACTS[kind_name]
-        for alias in (kind_name, *contract["aliases"]):
-            if any(
-                is_non_target_mention(text, start, end)
-                for start, end in phrase_spans(text, alias)
-            ):
-                phrases.append(alias)
-    return unique(phrases)
-
-
-def detect_non_target_profile_phrases(
-    text: str,
-    candidates: list[dict[str, Any]],
-) -> list[str]:
-    """Return broad-profile phrases used only as exclusions or references."""
-    phrases: list[str] = []
-    for candidate in candidates:
-        for phrase in candidate["explicit"]:
-            if any(
-                is_non_target_mention(text, start, end)
-                for start, end in phrase_spans(text, phrase)
-            ):
-                phrases.append(phrase)
-    return unique(phrases)
+def mask_non_target_documents(text: str) -> tuple[str, list[str], set[str]]:
+    """Mask excluded document occurrences before both lexical scoring and routing."""
+    phrases = {phrase for signals in PROFILE_SIGNALS.values() for phrase in signals["explicit"]}
+    for kind, contract in KIND_CONTRACTS.items():
+        phrases.update((kind, *contract["aliases"]))
+    spans = sorted({
+        span for phrase in phrases for span in phrase_spans(text, phrase)
+    }, reverse=True)
+    masked = list(text)
+    non_targets = []
+    exclusions = set()
+    next_excluded_start = None
+    for start, end in spans:
+        # In "A와 B는 빼고" the same predicate applies to both document names.
+        joined = (
+            next_excluded_start is not None and end < next_excluded_start
+            and re.fullmatch(r"\s*(?:와|과|및|하고)\s*", text[end:next_excluded_start])
+        )
+        if joined or is_excluded_mention(text, start, end):
+            exclusions.add(text[start:end])
+            next_excluded_start = start
+        elif not is_reference_mention(text, start, end):
+            continue
+        masked[start:end] = " " * (end - start)
+        non_targets.append(text[start:end])
+    return "".join(masked), non_targets, exclusions
 
 
 def detect_generic_profile_mentions(
@@ -251,8 +250,6 @@ def detect_generic_profile_mentions(
         best_phrase = ""
         for phrase in candidate["explicit"]:
             for start, end in phrase_spans(text, phrase):
-                if is_non_target_mention(text, start, end):
-                    continue
                 consumed = any(
                     kind_start <= start and end <= kind_end
                     for kind_start, kind_end in kind_spans
@@ -718,17 +715,18 @@ def question_hint(
 
 def classify_natural(raw: str) -> dict[str, Any]:
     text = normalize_text(raw)
-    candidates = score_profiles(text)
-    kind_mentions = detect_kind_mentions(text)
-    non_target_phrases = unique(
-        [
-            *detect_non_target_kind_phrases(text),
-            *detect_non_target_profile_phrases(text, candidates),
-        ]
-    )
+    routing_text, non_target_phrases, excluded_phrases = mask_non_target_documents(text)
+    # A topic keyword bundle must not infer a profile explicitly declined as output.
+    candidates = [
+        item for item in score_profiles(routing_text) if item["explicit"] or not any(
+            normalize_text(phrase) in excluded_phrases
+            for phrase in PROFILE_SIGNALS[item["profile"]]["explicit"]
+        )
+    ]
+    kind_mentions = detect_kind_mentions(routing_text)
     selected_kinds = unique([item["kind"] for item in kind_mentions])
     generic_mentions = detect_generic_profile_mentions(
-        text,
+        routing_text,
         candidates,
         kind_mentions,
     )
@@ -791,7 +789,7 @@ def classify_natural(raw: str) -> dict[str, Any]:
         ]
     else:
         selected, confidence, needs_clarification, reason = select_profiles(
-            text,
+            routing_text,
             candidates,
         )
         generic_profiles = selected
@@ -806,6 +804,9 @@ def classify_natural(raw: str) -> dict[str, Any]:
             if item["profile"] in selected
         ]
     include_hints, exclude_hints = extract_scope_hints(raw)
+    exclude_hints = [
+        hint for hint in exclude_hints if normalize_text(hint) not in non_target_phrases
+    ]
     topic_matches = unique([*explicit_matches, *non_target_phrases])
     focus_text = text
     focus_phrases = unique(

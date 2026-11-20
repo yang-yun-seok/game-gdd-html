@@ -4,6 +4,8 @@
 
 확정된 `ScopePlan.scope.document_plans` 항목 하나를 개발 전달·검토 가능한 렌더러 JSON 한 개로 작성한다. kind가 소유한 기획 결정을 깊게 쓰고 인접 kind와 구현 방식은 참조·협의 대상으로 남긴다.
 
+기획 깊이는 [design-depth.md](design-depth.md)의 공통 기준과 대상 profile을 적용한다. 핵심 결정의 이유·조건별 결과·경계 사례·계산 예시·수용조건을 본문에 연결한다. 기존 문서 수정은 [revision-workflow.md](revision-workflow.md)를 따르고 원본의 결정을 기준으로 필요한 블록을 수정한다.
+
 ## 입력
 
 - 병합 완료된 Idea IR과 답변

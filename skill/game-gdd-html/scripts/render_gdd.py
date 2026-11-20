@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from document_source import embed_source
 from kind_contracts import KIND_CONTRACTS, KIND_NAMES
 from profile_contracts import (
     ALL_CANONICAL_SECTION_IDS,
@@ -271,18 +272,28 @@ class BlockRenderer:
                 )
 
         normalized_rows: list[list[Any]] = []
+        column_keys = {key for key, _ in normalized_columns}
+        width = len(normalized_columns)
         for index, row in enumerate(rows):
+            row_path = f"{path}.rows[{index}]"
             if isinstance(row, list):
-                values = list(row)
-                if len(values) < len(normalized_columns):
-                    values.extend([""] * (len(normalized_columns) - len(values)))
-                normalized_rows.append(values[: len(normalized_columns)])
+                if len(row) > width:
+                    raise RenderError(
+                        f"{row_path} has {len(row)} cells for {width} columns"
+                    )
+                normalized_rows.append(row + [""] * (width - len(row)))
             elif isinstance(row, dict):
+                extra_keys = row.keys() - column_keys
+                if extra_keys:
+                    raise RenderError(
+                        f"{row_path} contains undeclared column keys: "
+                        + ", ".join(sorted(extra_keys))
+                    )
                 normalized_rows.append(
                     [row.get(key, "") for key, _ in normalized_columns]
                 )
             else:
-                raise RenderError(f"{path}.rows[{index}] must be an array or object")
+                raise RenderError(f"{row_path} must be an array or object")
         return normalized_columns, normalized_rows
 
     def render_table(self, block: dict[str, Any], path: str) -> str:
@@ -1112,7 +1123,7 @@ def render_document(
     leftovers = sorted(set(PLACEHOLDER.findall(output)))
     if leftovers:
         raise RenderError(f"unresolved template placeholders: {', '.join(leftovers)}")
-    return output
+    return embed_source(output, data)
 
 
 def parse_args() -> argparse.Namespace:
@@ -1153,7 +1164,8 @@ def main() -> int:
         else:
             output_path = default_output_path(data)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(output_html, encoding="utf-8", newline="\n")
+        with output_path.open("x", encoding="utf-8", newline="\n") as output_file:
+            output_file.write(output_html)
     except FileNotFoundError as error:
         print(f"[ERROR] File not found: {error.filename}", file=sys.stderr)
         return 2
@@ -1164,7 +1176,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 2
-    except (OSError, RenderError) as error:
+    except (OSError, ValueError) as error:
         print(f"[ERROR] {error}", file=sys.stderr)
         return 2
     print(f"[OK] Rendered {output_path.resolve()}")

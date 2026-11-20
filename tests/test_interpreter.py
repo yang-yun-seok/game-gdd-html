@@ -203,6 +203,29 @@ class NaturalLanguageRoutingTests(unittest.TestCase):
         self.assertGreaterEqual(ui_candidate["score"], 100)
         self.assertEqual(result["query"]["context"]["about"], "강화 시스템")
 
+    def test_exclusions_apply_to_both_profile_and_kind_routing(self) -> None:
+        cases = (
+            ("전체 GDD는 빼고, 부활 시스템 기획서만 작성해줘.", ["system"], []),
+            ("제외: UI 기획서. 부활 시스템 기획서만 작성해줘.", ["system"], []),
+            ("공유 재화가 부족할 때의 예외 처리만 깊게 다룬 시스템 기획서를 작성해줘. "
+             "UI 기획서는 작성하지 마.", ["system"], []),
+            ("UI 기획서를 참고해 부활 시스템 기획서를 작성해줘.", ["system"], []),
+            ("캐릭터 시스템 기획서와 UI 기획서는 만들지 말고 통합 GDD를 작성해줘.",
+             ["full"], ["master-gdd"]),
+            ("기존 UI 기획서를 참고해 새 UI 기획서를 작성해줘.", ["ui-ux"], ["ui-spec"]),
+        )
+        for request, profiles, kinds in cases:
+            with self.subTest(request=request):
+                result = interpret(request)
+                self.assertEqual(result["filter"]["selected_profiles"], profiles)
+                self.assertEqual(result["filter"]["selected_kinds"], kinds)
+                self.assertFalse(result["filter"]["needs_clarification"])
+        result = interpret("UI 기획서는 작성하지 마.")
+        self.assertEqual(result["filter"]["documents"], [])
+        self.assertTrue(result["filter"]["needs_clarification"])
+        scoring_fallback = interpret("UI 기획서는 작성하지 마. 화면 흐름, 정보 구조, 인터랙션 규칙을 정리해줘.")
+        self.assertNotIn("ui-ux", scoring_fallback["filter"]["selected_profiles"])
+
     def test_ambiguous_request_does_not_silently_become_full(self) -> None:
         result = interpret("게임 기획서")
         self.assertEqual(result["filter"]["selected_profiles"], [])

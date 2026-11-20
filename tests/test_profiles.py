@@ -165,6 +165,36 @@ def render_to(path: Path, data: dict[str, object], template: str) -> None:
     path.write_text(render_document(data, template), encoding="utf-8", newline="\n")
 
 
+def check_table_rows(template: str) -> None:
+    data = make_data("system")
+    table = {
+        "type": "table",
+        "columns": [
+            {"key": "condition", "label": "조건"},
+            {"key": "result", "label": "결과"},
+        ],
+        "rows": [["대기"], {"result": "환급", "condition": "취소"}, {"result": "보류"}],
+    }
+    data["sections"][0]["blocks"].insert(0, table)  # type: ignore[index]
+    rendered = render_document(data, template)
+    for cells in ("<td>대기</td><td></td>", "<td>취소</td><td>환급</td>", "<td></td><td>보류</td>"):
+        if cells not in rendered:
+            raise AssertionError(f"Valid table row did not render as expected: {cells}")
+
+    for invalid_row, detail in (
+        (["취소", "중단", "환급"], "3 cells"),
+        ({"condition": "취소", "refund_policy": "환급"}, "refund_policy"),
+    ):
+        table["rows"][1] = invalid_row
+        try:
+            render_document(data, template)
+        except RenderError as error:
+            if "sections[0].blocks[0].rows[1]" not in str(error) or detail not in str(error):
+                raise AssertionError(f"Missing row location or error details: {error}") from error
+        else:
+            raise AssertionError(f"Renderer silently discarded a rule in {invalid_row!r}")
+
+
 def check_output_optimization(template: str) -> None:
     data = make_data("system")
     for section in data["sections"]:  # type: ignore[index]
@@ -195,6 +225,7 @@ def check_output_optimization(template: str) -> None:
 def main() -> int:
     template = TEMPLATE_PATH.read_text(encoding="utf-8")
     check_output_optimization(template)
+    check_table_rows(template)
     for profile, rule in PROFILE_RULES.items():
         profile_doc = (
             SCRIPT_DIR.parent / "references" / "profiles" / f"{profile}.md"

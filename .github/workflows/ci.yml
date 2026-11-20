@@ -52,5 +52,11 @@ jobs:
       - name: Test document profiles
         run: python tests/test_profiles.py
 
+      - name: Test document revisions
+        run: python tests/test_revisions.py
+
+      - name: Test scenario review against rendered documents
+        run: python tests/test_scenario_review.py
+
       - name: Test one-page PDF exporter
         run: node skill/game-gdd-html/scripts/export_pdf.cjs --self-test
